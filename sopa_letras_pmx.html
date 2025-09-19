@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sopa de Letras - Bienestar PMX Lift</title>
+    <style>
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none; }
+            .print-page { page-break-after: always; }
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #4a5568;
+            font-size: 2.5em;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .header h2 {
+            color: #667eea;
+            font-size: 1.5em;
+            margin: 10px 0;
+            font-weight: 300;
+        }
+        
+        .grid-container {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(20, 25px);
+            grid-template-rows: repeat(20, 25px);
+            gap: 2px;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            padding: 10px;
+            background: #f8f9ff;
+        }
+        
+        .cell {
+            width: 25px;
+            height: 25px;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            background: white;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+        
+        .cell:hover {
+            background: #e6fffa;
+            transform: scale(1.1);
+        }
+        
+        .words-list {
+            margin-top: 30px;
+        }
+        
+        .words-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .word-item {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .word-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+        
+        .instructions {
+            background: #f0f7ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 10px 10px 0;
+        }
+        
+        .download-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 20px 0;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧩 Sopa de Letras</h1>
+            <h2>Bienestar PMX Lift</h2>
+            <p style="color: #666; font-style: italic;">Encuentra todas las palabras relacionadas con nuestro ecosistema PMX</p>
+        </div>
+        
+        <div class="instructions">
+            <strong>📋 Instrucciones:</strong> Encuentra las 38 palabras ocultas en la grilla. Las palabras pueden estar en horizontal, vertical o diagonal, tanto hacia adelante como hacia atrás.
+        </div>
+        
+        <div class="grid-container">
+            <div class="grid" id="wordGrid"></div>
+        </div>
+        
+        <div class="words-list">
+            <h3 style="color: #4a5568; text-align: center; margin-bottom: 20px;">🎯 Palabras a encontrar:</h3>
+            <div class="words-grid" id="wordsList"></div>
+        </div>
+        
+        <button class="download-btn no-print" onclick="downloadPDF()">📥 Descargar PDF</button>
+    </div>
+
+    <script>
+        const words = [
+            'CAMPANA', 'MVPD', 'PRISMA', 'CTV', 'THREPREPORT', 'PMXLIFTREPORT', 
+            'DIRECTV', 'AMPERSAND', 'DISH', 'DISNEY', 'TUBI', 'ROKU', 'NBCU', 
+            'OREO', 'CHICKFILA', 'PARTNERS', 'INDIATEAM', 'USTEAM', 'LATAMTEAM', 
+            'BIWEEKLYTRAFFIC', 'STATUS', 'ACTIVATION', 'INVESTMENT', 'COLOMBIA', 
+            'COSTARICA', 'PERU', 'SMARTSHEET', 'IO', 'RECONCILIAR', 'INVOICE', 
+            'TRACKER', 'PACING', 'LIVE', 'LAUNCH'
+        ];
+
+        const gridSize = 20;
+        let grid = Array(gridSize).fill().map(() => Array(gridSize).fill(''));
+        
+        // Función para colocar una palabra en la grilla
+        function placeWord(word, startRow, startCol, direction) {
+            const directions = {
+                horizontal: [0, 1],
+                vertical: [1, 0],
+                diagonal: [1, 1],
+                diagonalUp: [-1, 1],
+                horizontalReverse: [0, -1],
+                verticalReverse: [-1, 0],
+                diagonalReverse: [-1, -1],
+                diagonalUpReverse: [1, -1]
+            };
+            
+            const [rowDir, colDir] = directions[direction];
+            
+            for (let i = 0; i < word.length; i++) {
+                const row = startRow + i * rowDir;
+                const col = startCol + i * colDir;
+                
+                if (row < 0 || row >= gridSize || col < 0 || col >= gridSize) {
+                    return false;
+                }
+                
+                if (grid[row][col] !== '' && grid[row][col] !== word[i]) {
+                    return false;
+                }
+            }
+            
+            for (let i = 0; i < word.length; i++) {
+                const row = startRow + i * rowDir;
+                const col = startCol + i * colDir;
+                grid[row][col] = word[i];
+            }
+            
+            return true;
+        }
+        
+        // Función para verificar si una palabra puede ser colocada
+        function canPlaceWord(word, startRow, startCol, direction) {
+            const directions = {
+                horizontal: [0, 1],
+                vertical: [1, 0],
+                diagonal: [1, 1],
+                diagonalUp: [-1, 1],
+                horizontalReverse: [0, -1],
+                verticalReverse: [-1, 0],
+                diagonalReverse: [-1, -1],
+                diagonalUpReverse: [1, -1]
+            };
+            
+            const [rowDir, colDir] = directions[direction];
+            
+            for (let i = 0; i < word.length; i++) {
+                const row = startRow + i * rowDir;
+                const col = startCol + i * colDir;
+                
+                if (row < 0 || row >= gridSize || col < 0 || col >= gridSize) {
+                    return false;
+                }
+                
+                if (grid[row][col] !== '' && grid[row][col] !== word[i]) {
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+        
+        // Colocar todas las palabras
+        function placeAllWords() {
+            const directions = ['horizontal', 'vertical', 'diagonal', 'diagonalUp', 
+                             'horizontalReverse', 'verticalReverse', 'diagonalReverse', 'diagonalUpReverse'];
+            
+            for (const word of words) {
+                let placed = false;
+                let attempts = 0;
+                
+                while (!placed && attempts < 100) {
+                    const direction = directions[Math.floor(Math.random() * directions.length)];
+                    const startRow = Math.floor(Math.random() * gridSize);
+                    const startCol = Math.floor(Math.random() * gridSize);
+                    
+                    if (canPlaceWord(word, startRow, startCol, direction)) {
+                        placeWord(word, startRow, startCol, direction);
+                        placed = true;
+                    }
+                    attempts++;
+                }
+            }
+        }
+        
+        // Llenar espacios vacíos con letras aleatorias
+        function fillEmptySpaces() {
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    if (grid[i][j] === '') {
+                        grid[i][j] = letters[Math.floor(Math.random() * letters.length)];
+                    }
+                }
+            }
+        }
+        
+        // Crear la grilla visual
+        function createGrid() {
+            const gridElement = document.getElementById('wordGrid');
+            gridElement.innerHTML = '';
+            
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.textContent = grid[i][j];
+                    gridElement.appendChild(cell);
+                }
+            }
+        }
+        
+        // Crear lista de palabras
+        function createWordsList() {
+            const wordsElement = document.getElementById('wordsList');
+            wordsElement.innerHTML = '';
+            
+            words.forEach(word => {
+                const wordElement = document.createElement('div');
+                wordElement.className = 'word-item';
+                wordElement.textContent = word;
+                wordsElement.appendChild(wordElement);
+            });
+        }
+        
+        // Función para descargar como PDF
+        function downloadPDF() {
+            window.print();
+        }
+        
+        // Inicializar
+        placeAllWords();
+        fillEmptySpaces();
+        createGrid();
+        createWordsList();
+    </script>
+</body>
+</html>
